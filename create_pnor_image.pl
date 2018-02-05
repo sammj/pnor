@@ -183,34 +183,36 @@ my %filenames = (
 	'CAPP' => "$scratch_dir/cappucode.bin.ecc",
 	'SECBOOT' => "$scratch_dir/secboot.bin.ecc",
 	'VERSION' => "$openpower_version_filename",
-	'IMA_CATALOG' => "$scratch_dir/ima_catalog.bin.ecc"
+	'IMA_CATALOG' => "$scratch_dir/ima_catalog.bin.ecc",
+	#P9 Only
+	'WOFDATA' => "$wofdata_binary_filename",
+	'MEMD' => "$memddata_binary_filename",
+	'HDAT' => "$hdat_binary_filename",
+	#P8 Only
+	'SBEC' => "$scratch_dir/$sbec_binary_filename",
+	'WINK' => "$scratch_dir/$wink_binary_filename",
+	#Not P8
+	'SBKT' => "$scratch_dir/SBKT.bin",
+	'HCODE' => "$scratch_dir/$wink_binary_filename",
+	'HBBL' => "$scratch_dir/hbbl.bin.ecc",
+	'RINGOVD' => "$scratch_dir/ringOvd.bin",
+	'HB_VOLATILE' => "$scratch_dir/guard.bin.ecc"
 );
 
 if ($release eq "p9"){
     $build_pnor_command .= " --binFile_WOFDATA $wofdata_binary_filename" if -e $wofdata_binary_filename;
     $build_pnor_command .= " --binFile_MEMD $memddata_binary_filename" if -e $memddata_binary_filename;
     $build_pnor_command .= " --binFile_HDAT $hdat_binary_filename" if -e $hdat_binary_filename;
-    #Sigh
-    $filenames{'WOFDATA'} = "$wofdata_binary_filename" if -e $wofdata_binary_filename;
-    $filenames{'MEMD'} = "$memddata_binary_filename" if -e $memddata_binary_filename;
-    $filenames{'HDAT'} = "$hdat_binary_filename" if -e $hdat_binary_filename;
 }
 if ($release eq "p8"){
     $build_pnor_command .= " --binFile_SBEC $scratch_dir/$sbec_binary_filename";
     $build_pnor_command .= " --binFile_WINK $scratch_dir/$wink_binary_filename";
-    $filenames{'SBEC'} = "$scratch_dir/$sbec_binary_filename";
-    $filenames{'WINK'} = "$scratch_dir/$wink_binary_filename";
 } else {
     $build_pnor_command .= " --binFile_SBKT $scratch_dir/SBKT.bin";
     $build_pnor_command .= " --binFile_HCODE $scratch_dir/$wink_binary_filename";
     $build_pnor_command .= " --binFile_HBBL $scratch_dir/hbbl.bin.ecc";
     $build_pnor_command .= " --binFile_RINGOVD $scratch_dir/ringOvd.bin";
     $build_pnor_command .= " --binFile_HB_VOLATILE $scratch_dir/guard.bin.ecc";
-    $filenames{'SBKT'} = "$scratch_dir/SBKT.bin";
-    $filenames{'HCODE'} = "$scratch_dir/$wink_binary_filename";
-    $filenames{'HBBL'} = "$scratch_dir/hbbl.bin.ecc";
-    $filenames{'RINGOVD'} = "$scratch_dir/ringOvd.bin";
-    $filenames{'HB_VOLATILE'} = "$scratch_dir/guard.bin.ecc";
 }
 $build_pnor_command .= " --fpartCmd \"fpart\"";
 $build_pnor_command .= " --fcpCmd \"fcp\"";
