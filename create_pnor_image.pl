@@ -26,6 +26,7 @@ my $hdat_binary_filename = "";
 
 my $SEPARATOR = ",";
 
+# TODO so is the intent to provide our own CSV file instead?
 sub write_header_csv {
 	my ($csv, $num, $base, $flags) = @_;
 	my $S = $SEPARATOR;
@@ -139,29 +140,6 @@ print "release = $release\n";
 print "scratch_dir = $scratch_dir\n";
 print "pnor_data_dir = $pnor_data_dir\n";
 
-my $build_pnor_command = "$hb_image_dir/buildpnor.pl";
-$build_pnor_command .= " --pnorOutBin $pnor_filename --pnorLayout $xml_layout_file";
-$build_pnor_command .= " --binFile_HBD $scratch_dir/$targeting_binary_filename";
-$build_pnor_command .= " --binFile_SBE $scratch_dir/$sbe_binary_filename";
-$build_pnor_command .= " --binFile_HBB $scratch_dir/hostboot.header.bin.ecc";
-$build_pnor_command .= " --binFile_HBI $scratch_dir/hostboot_extended.header.bin.ecc";
-$build_pnor_command .= " --binFile_HBRT $scratch_dir/hostboot_runtime.header.bin.ecc";
-$build_pnor_command .= " --binFile_HBEL $scratch_dir/hbel.bin.ecc";
-$build_pnor_command .= " --binFile_GUARD $scratch_dir/guard.bin.ecc";
-$build_pnor_command .= " --binFile_PAYLOAD $payload";
-$build_pnor_command .= " --binFile_BOOTKERNEL $bootkernel";
-$build_pnor_command .= " --binFile_NVRAM $scratch_dir/nvram.bin";
-$build_pnor_command .= " --binFile_MVPD $scratch_dir/mvpd_fill.bin.ecc";
-$build_pnor_command .= " --binFile_DJVPD $scratch_dir/djvpd_fill.bin.ecc";
-$build_pnor_command .= " --binFile_CVPD $scratch_dir/cvpd.bin.ecc";
-$build_pnor_command .= " --binFile_ATTR_TMP $scratch_dir/attr_tmp.bin.ecc";
-$build_pnor_command .= " --binFile_OCC $occ_binary_filename.ecc";
-$build_pnor_command .= " --binFile_ATTR_PERM $scratch_dir/attr_perm.bin.ecc";
-$build_pnor_command .= " --binFile_FIRDATA $scratch_dir/firdata.bin.ecc";
-$build_pnor_command .= " --binFile_CAPP $scratch_dir/cappucode.bin.ecc";
-$build_pnor_command .= " --binFile_SECBOOT $scratch_dir/secboot.bin.ecc";
-$build_pnor_command .= " --binFile_VERSION $openpower_version_filename";
-$build_pnor_command .= " --binFile_IMA_CATALOG $scratch_dir/ima_catalog.bin.ecc";
 my %filenames = (
 	'HBD' => "$scratch_dir/$targeting_binary_filename",
 	'SBE' => "$scratch_dir/$sbe_binary_filename",
@@ -198,26 +176,6 @@ my %filenames = (
 	'RINGOVD' => "$scratch_dir/ringOvd.bin",
 	'HB_VOLATILE' => "$scratch_dir/guard.bin.ecc"
 );
-
-if ($release eq "p9"){
-    $build_pnor_command .= " --binFile_WOFDATA $wofdata_binary_filename" if -e $wofdata_binary_filename;
-    $build_pnor_command .= " --binFile_MEMD $memddata_binary_filename" if -e $memddata_binary_filename;
-    $build_pnor_command .= " --binFile_HDAT $hdat_binary_filename" if -e $hdat_binary_filename;
-}
-if ($release eq "p8"){
-    $build_pnor_command .= " --binFile_SBEC $scratch_dir/$sbec_binary_filename";
-    $build_pnor_command .= " --binFile_WINK $scratch_dir/$wink_binary_filename";
-} else {
-    $build_pnor_command .= " --binFile_SBKT $scratch_dir/SBKT.bin";
-    $build_pnor_command .= " --binFile_HCODE $scratch_dir/$wink_binary_filename";
-    $build_pnor_command .= " --binFile_HBBL $scratch_dir/hbbl.bin.ecc";
-    $build_pnor_command .= " --binFile_RINGOVD $scratch_dir/ringOvd.bin";
-    $build_pnor_command .= " --binFile_HB_VOLATILE $scratch_dir/guard.bin.ecc";
-}
-$build_pnor_command .= " --fpartCmd \"fpart\"";
-$build_pnor_command .= " --fcpCmd \"fcp\"";
-print "###############################";
-run_command("$build_pnor_command");
 
 #Generate the CSV
 my $ref = XMLin("$xml_layout_file", ForceArray => ['metadata', 'section'], SuppressEmpty => undef);
@@ -287,6 +245,8 @@ foreach my $section (@{$ref->{'section'}}) {
 	if (exists($filenames{$section->{'eyeCatch'}})) {
 		$file = "$filenames{$section->{'eyeCatch'}}";
 	} else {
+		# Saw
+		# Don't know what file to use for partition: BMC_INV
 		print STDERR "# Don't know what file to use for partition: $section->{'eyeCatch'}\n";
 	}
 	write_partition_csv $csv, $name, $base, $size, $flags, $side, $file;
@@ -347,6 +307,8 @@ ENDUSAGE
 sub parse_config_file {
 
 }
+
+
 
 #trim_string takes one string as input, trims leading and trailing whitespace
 # before returning that string
