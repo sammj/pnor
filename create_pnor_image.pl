@@ -144,52 +144,42 @@ print "release = $release\n";
 print "scratch_dir = $scratch_dir\n";
 print "pnor_data_dir = $pnor_data_dir\n";
 
-my $build_pnor_command = "$hb_image_dir/buildpnor.pl";
-$build_pnor_command .= " --pnorOutBin $pnor_filename --pnorLayout $xml_layout_file";
-$build_pnor_command .= " --binFile_HBD $scratch_dir/$targeting_binary_filename";
-$build_pnor_command .= " --binFile_SBE $scratch_dir/$sbe_binary_filename";
-$build_pnor_command .= " --binFile_HBB $scratch_dir/hostboot.header.bin.ecc";
-$build_pnor_command .= " --binFile_HBI $scratch_dir/hostboot_extended.header.bin.ecc";
-$build_pnor_command .= " --binFile_HBRT $scratch_dir/hostboot_runtime.header.bin.ecc";
-$build_pnor_command .= " --binFile_HBEL $scratch_dir/hbel.bin.ecc";
-$build_pnor_command .= " --binFile_GUARD $scratch_dir/guard.bin.ecc";
-$build_pnor_command .= " --binFile_PAYLOAD $payload";
-$build_pnor_command .= " --binFile_BOOTKERNEL $bootkernel";
-if ($rootfs ne "") {
-	$build_pnor_command .= " --binFile_ROOTFS $rootfs";
-}
-$build_pnor_command .= " --binFile_NVRAM $scratch_dir/nvram.bin";
-$build_pnor_command .= " --binFile_MVPD $scratch_dir/mvpd_fill.bin.ecc";
-$build_pnor_command .= " --binFile_DJVPD $scratch_dir/djvpd_fill.bin.ecc";
-$build_pnor_command .= " --binFile_CVPD $scratch_dir/cvpd.bin.ecc";
-$build_pnor_command .= " --binFile_ATTR_TMP $scratch_dir/attr_tmp.bin.ecc";
-$build_pnor_command .= " --binFile_OCC $occ_binary_filename.ecc";
-$build_pnor_command .= " --binFile_ATTR_PERM $scratch_dir/attr_perm.bin.ecc";
-$build_pnor_command .= " --binFile_FIRDATA $scratch_dir/firdata.bin.ecc";
-$build_pnor_command .= " --binFile_CAPP $scratch_dir/cappucode.bin.ecc";
-$build_pnor_command .= " --binFile_SECBOOT $scratch_dir/secboot.bin.ecc";
-$build_pnor_command .= " --binFile_VERSION $openpower_version_filename";
-$build_pnor_command .= " --binFile_IMA_CATALOG $scratch_dir/ima_catalog.bin.ecc";
+# TODO create ourselves (blank?):
+my %create_blank = (
+	'HBEL',
+	'GUARD',
+	'NVRAM',
+	'MVPD',
+	'DJVPD',
+	'ATTR_TMP',
+	'ATTR_PERM',
+	'FIRDATA',
+	'SECBOOT',
+	'RINGOVD'
+);
+# which we may as well do in ffspart right? --create-blank?
 my %filenames = (
+	# FIXME anything with $scratch_dir in the same needs to be fixed
 	'HBD' => "$scratch_dir/$targeting_binary_filename",
 	'SBE' => "$scratch_dir/$sbe_binary_filename",
 	'HBB' => "$scratch_dir/hostboot.header.bin.ecc",
 	'HBI' => "$scratch_dir/hostboot_extended.header.bin.ecc",
 	'HBRT' => "$scratch_dir/hostboot_runtime.header.bin.ecc",
-	'HBEL' => "$scratch_dir/hbel.bin.ecc",
-	'GUARD' => "$scratch_dir/guard.bin.ecc",
+	'HBEL' => "$scratch_dir/hbel.bin.ecc", # blank + ecc
+	'GUARD' => "$scratch_dir/guard.bin.ecc", # blank + ecc
 	'PAYLOAD' => "$payload",
 	'BOOTKERNEL' => "$bootkernel",
-	'NVRAM' => "$scratch_dir/nvram.bin",
-	'MVPD' => "$scratch_dir/mvpd_fill.bin.ecc",
-	'DJVPD' => "$scratch_dir/djvpd_fill.bin.ecc",
+	'ROOTFS' => "$rootfs", # TODO? if ($rootfs ne "")
+	'NVRAM' => "$scratch_dir/nvram.bin", # blank
+	'MVPD' => "$scratch_dir/mvpd_fill.bin.ecc", # blank + ecc
+	'DJVPD' => "$scratch_dir/djvpd_fill.bin.ecc", # blank + ecc
 	'CVPD' => "$scratch_dir/cvpd.bin.ecc",
-	'ATTR_TMP' => "$scratch_dir/attr_tmp.bin.ecc",
-	'ATTR_PERM' => "$scratch_dir/attr_perm.bin.ecc",
+	'ATTR_TMP' => "$scratch_dir/attr_tmp.bin.ecc", #blank + ecc
+	'ATTR_PERM' => "$scratch_dir/attr_perm.bin.ecc", #blank + ecc
 	'OCC' => "$occ_binary_filename.ecc",
-	'FIRDATA' => "$scratch_dir/firdata.bin.ecc",
+	'FIRDATA' => "$scratch_dir/firdata.bin.ecc", #blank + ecc
 	'CAPP' => "$scratch_dir/cappucode.bin.ecc",
-	'SECBOOT' => "$scratch_dir/secboot.bin.ecc",
+	'SECBOOT' => "$scratch_dir/secboot.bin.ecc", #blank + ecc
 	'VERSION' => "$openpower_version_filename",
 	'IMA_CATALOG' => "$scratch_dir/ima_catalog.bin.ecc",
 	#P9 Only
@@ -203,29 +193,9 @@ my %filenames = (
 	'SBKT' => "$scratch_dir/SBKT.bin",
 	'HCODE' => "$scratch_dir/$wink_binary_filename",
 	'HBBL' => "$scratch_dir/hbbl.bin.ecc",
-	'RINGOVD' => "$scratch_dir/ringOvd.bin",
+	'RINGOVD' => "$scratch_dir/ringOvd.bin", #blank + ecc
 	'HB_VOLATILE' => "$scratch_dir/guard.bin.ecc"
 );
-
-if ($release eq "p9"){
-    $build_pnor_command .= " --binFile_WOFDATA $wofdata_binary_filename" if -e $wofdata_binary_filename;
-    $build_pnor_command .= " --binFile_MEMD $memddata_binary_filename" if -e $memddata_binary_filename;
-    $build_pnor_command .= " --binFile_HDAT $hdat_binary_filename" if -e $hdat_binary_filename;
-}
-if ($release eq "p8"){
-    $build_pnor_command .= " --binFile_SBEC $scratch_dir/$sbec_binary_filename";
-    $build_pnor_command .= " --binFile_WINK $scratch_dir/$wink_binary_filename";
-} else {
-    $build_pnor_command .= " --binFile_SBKT $scratch_dir/SBKT.bin";
-    $build_pnor_command .= " --binFile_HCODE $scratch_dir/$wink_binary_filename";
-    $build_pnor_command .= " --binFile_HBBL $scratch_dir/hbbl.bin.ecc";
-    $build_pnor_command .= " --binFile_RINGOVD $scratch_dir/ringOvd.bin";
-    $build_pnor_command .= " --binFile_HB_VOLATILE $scratch_dir/guard.bin.ecc";
-}
-$build_pnor_command .= " --fpartCmd \"fpart\"";
-$build_pnor_command .= " --fcpCmd \"fcp\"";
-print "###############################";
-run_command("$build_pnor_command");
 
 #Generate the CSV
 my $ref = XMLin("$xml_layout_file", ForceArray => ['metadata', 'section'], SuppressEmpty => undef);
@@ -294,6 +264,12 @@ foreach my $section (@{$ref->{'section'}}) {
 	my $file = "/dev/zero";
 	if (exists($filenames{$section->{'eyeCatch'}})) {
 		$file = "$filenames{$section->{'eyeCatch'}}";
+		#if (exists($create_blank{$section->{'eyeCatch'}})) {
+		#	run_command("dd if=/dev/zero bs=16K count=1 | tr \"\\000\" \"\\377\" > $file");
+		#	if (exists($section->{'ecc'})) {
+		#		run_command("ecc --inject $file --output $file --p9");
+		#	}
+		#}
 	} else {
 		print STDERR "# Don't know what file to use for partition: $section->{'eyeCatch'}\n";
 	}
@@ -335,8 +311,8 @@ if ($side_count == 2) {
 
 
 #ffspart should really learn to make its own output file
-run_command("touch $outdir/ffspart.pnor");
-run_command("ffspart -s $block_size -c $block_count -i $scratch_dir/pnor_layout.csv -p $outdir/ffspart.pnor");
+run_command("touch $pnor_filename");
+run_command("ffspart -s $block_size --create_blank -c $block_count -i $scratch_dir/pnor_layout.csv -p $pnor_filename");
 
 #END MAIN
 #-------------------------------------------------------------------------
