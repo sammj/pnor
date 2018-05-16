@@ -11,6 +11,7 @@ my $pnor_data_dir = "";
 my $pnor_filename = "";
 my $payload = "";
 my $bootkernel = "";
+my $rootfs = "";
 my $hb_image_dir = "";
 my $xml_layout_file = "";
 my $targeting_binary_filename = "";
@@ -66,6 +67,10 @@ while (@ARGV > 0){
     }
     elsif (/^-bootkernel/i){
         $bootkernel = $ARGV[1] or die "Bad command line arg given: expecting a filepath to bootloader kernel image.\n";
+        shift;
+    }
+    elsif (/^-rootfs/i){
+        $rootfs = $ARGV[1] or die "Bad command line arg given: expecting a filepath to bootloader rootfs image.\n";
         shift;
     }
     elsif (/^-targeting_binary_filename/i){
@@ -134,6 +139,9 @@ $build_pnor_command .= " --binFile_HBEL $scratch_dir/hbel.bin.ecc";
 $build_pnor_command .= " --binFile_GUARD $scratch_dir/guard.bin.ecc";
 $build_pnor_command .= " --binFile_PAYLOAD $payload";
 $build_pnor_command .= " --binFile_BOOTKERNEL $bootkernel";
+if ($rootfs ne "") {
+	$build_pnor_command .= " --binFile_ROOTFS $rootfs";
+}
 $build_pnor_command .= " --binFile_NVRAM $scratch_dir/nvram.bin";
 $build_pnor_command .= " --binFile_MVPD $scratch_dir/mvpd_fill.bin.ecc";
 $build_pnor_command .= " --binFile_DJVPD $scratch_dir/djvpd_fill.bin.ecc";

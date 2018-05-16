@@ -27,6 +27,7 @@ my $wof_binary_filename = "";
 my $memd_binary_filename = "";
 my $payload_filename = "";
 my $bootkernel_filename = "";
+my $rootfs_filename = "";
 my $binary_dir = "";
 my $secureboot = 0;
 my $key_transition = "";
@@ -124,6 +125,10 @@ while (@ARGV > 0){
     }
     elsif (/^-bootkernel_filename/i){
         $bootkernel_filename = $ARGV[1] or die "Bad command line arg given: expecting a filepath to boot kernel binary file.\n";
+        shift;
+    }
+    elsif (/^-rootfs_filename/i){
+        $rootfs_filename = $ARGV[1] or die "Bad command line arg given: expecting a filepath to boot rootfs file.\n";
         shift;
     }
     elsif (/^-key_transition/i){
@@ -262,12 +267,16 @@ sub processConvergedSections {
     $sections{OCC}{out}         = "$occ_binary_filename.ecc";
     $sections{BOOTKERNEL}{in}   = "$binary_dir/$bootkernel_filename";
     $sections{BOOTKERNEL}{out}  = "$scratch_dir/$bootkernel_filename";
+    if ($rootfs_filename ne "") {
+	    $sections{ROOTFS}{in}   	= "$binary_dir/$rootfs_filename";
+	    $sections{ROOTFS}{out}  	= "$scratch_dir/$rootfs_filename";
+    }
     $sections{CAPP}{in}         = "$capp_binary_filename";
     $sections{CAPP}{out}        = "$scratch_dir/cappucode.bin.ecc";
     $sections{CVPD}{in}         = "$hb_binary_dir/cvpd.bin";
     $sections{CVPD}{out}        = "$scratch_dir/cvpd.bin.ecc";
     $sections{VERSION}{in}      = "$openpower_version_filename";
-    $sections{VERSION}{out}     = "$openpower_version_filename";
+    $sections{VERSION}{out}     = "$scratch_dir/VERSION.bin";
     $sections{IMA_CATALOG}{in}  = "$ima_catalog_binary_filename";
     $sections{IMA_CATALOG}{out} = "$scratch_dir/ima_catalog.bin.ecc";
 
@@ -461,6 +470,13 @@ else
 
     # Stage BOOTKERNEL partition
     run_command("cp $binary_dir/$bootkernel_filename $scratch_dir/$bootkernel_filename");
+
+    # Stage ROOTFS partition (optional)
+    if ($rootfs_filename ne "") {
+	    run_command("cp $binary_dir/$rootfs_filename $scratch_dir/$rootfs_filename");
+    } else {
+	    print "Not including ROOTFS partition\n";
+    }
 
     # Stage WINK partition
     run_command("cp $hb_binary_dir/$wink_binary_filename $scratch_dir/");
