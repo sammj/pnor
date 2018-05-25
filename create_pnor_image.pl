@@ -160,41 +160,41 @@ my %create_blank = (
 # which we may as well do in ffspart right? --create-blank?
 my %filenames = (
 	# FIXME anything with $scratch_dir in the same needs to be fixed
-	'HBD' => "$scratch_dir/$targeting_binary_filename",
-	'SBE' => "$scratch_dir/$sbe_binary_filename",
-	'HBB' => "$scratch_dir/hostboot.header.bin.ecc",
-	'HBI' => "$scratch_dir/hostboot_extended.header.bin.ecc",
-	'HBRT' => "$scratch_dir/hostboot_runtime.header.bin.ecc",
-	'HBEL' => "$scratch_dir/hbel.bin.ecc", # blank + ecc
-	'GUARD' => "$scratch_dir/guard.bin.ecc", # blank + ecc
+	'HBD' => "",#$scratch_dir/$targeting_binary_filename",
+	'SBE' => "",#$scratch_dir/$sbe_binary_filename",
+	'HBB' => "",#$scratch_dir/hostboot.header.bin.ecc",
+	'HBI' => "",#$scratch_dir/hostboot_extended.header.bin.ecc",
+	'HBRT' => "",#$scratch_dir/hostboot_runtime.header.bin.ecc",
+	'HBEL' => "",#$scratch_dir/hbel.bin.ecc", # blank + ecc
+	'GUARD' => "",#$scratch_dir/guard.bin.ecc", # blank + ecc
 	'PAYLOAD' => "$payload",
 	'BOOTKERNEL' => "$bootkernel",
-	'ROOTFS' => "$rootfs", # TODO? if ($rootfs ne "")
-	'NVRAM' => "$scratch_dir/nvram.bin", # blank
-	'MVPD' => "$scratch_dir/mvpd_fill.bin.ecc", # blank + ecc
-	'DJVPD' => "$scratch_dir/djvpd_fill.bin.ecc", # blank + ecc
-	'CVPD' => "$scratch_dir/cvpd.bin.ecc",
-	'ATTR_TMP' => "$scratch_dir/attr_tmp.bin.ecc", #blank + ecc
-	'ATTR_PERM' => "$scratch_dir/attr_perm.bin.ecc", #blank + ecc
-	'OCC' => "$occ_binary_filename.ecc",
-	'FIRDATA' => "$scratch_dir/firdata.bin.ecc", #blank + ecc
-	'CAPP' => "$scratch_dir/cappucode.bin.ecc",
-	'SECBOOT' => "$scratch_dir/secboot.bin.ecc", #blank + ecc
+	'ROOTFS' => "$rootfs", # TODO? if ($rootfs ne "",)
+	'NVRAM' => "",#$scratch_dir/nvram.bin", # blank
+	'MVPD' => "",#$scratch_dir/mvpd_fill.bin.ecc", # blank + ecc
+	'DJVPD' => "",#$scratch_dir/djvpd_fill.bin.ecc", # blank + ecc
+	'CVPD' => "",#$scratch_dir/cvpd.bin.ecc",
+	'ATTR_TMP' => "",#$scratch_dir/attr_tmp.bin.ecc", #blank + ecc
+	'ATTR_PERM' => "",#$scratch_dir/attr_perm.bin.ecc", #blank + ecc
+	'OCC' => "$occ_binary_filename",
+	'FIRDATA' => "",#$scratch_dir/firdata.bin.ecc", #blank + ecc
+	'CAPP' => "",#$scratch_dir/cappucode.bin.ecc",
+	'SECBOOT' => "",#$scratch_dir/secboot.bin.ecc", #blank + ecc
 	'VERSION' => "$openpower_version_filename",
-	'IMA_CATALOG' => "$scratch_dir/ima_catalog.bin.ecc",
+	'IMA_CATALOG' => "",#$scratch_dir/ima_catalog.bin.ecc",
 	#P9 Only
 	'WOFDATA' => "$wofdata_binary_filename",
 	'MEMD' => "$memddata_binary_filename",
 	'HDAT' => "$hdat_binary_filename",
 	#P8 Only
-	'SBEC' => "$scratch_dir/$sbec_binary_filename",
-	'WINK' => "$scratch_dir/$wink_binary_filename",
+	'SBEC' => "",#$scratch_dir/$sbec_binary_filename",
+	'WINK' => "",#$scratch_dir/$wink_binary_filename",
 	#Not P8
-	'SBKT' => "$scratch_dir/SBKT.bin",
-	'HCODE' => "$scratch_dir/$wink_binary_filename",
-	'HBBL' => "$scratch_dir/hbbl.bin.ecc",
-	'RINGOVD' => "$scratch_dir/ringOvd.bin", #blank + ecc
-	'HB_VOLATILE' => "$scratch_dir/guard.bin.ecc"
+	'SBKT' => "",#$scratch_dir/SBKT.bin",
+	'HCODE' => "",#$scratch_dir/$wink_binary_filename",
+	'HBBL' => "",#$scratch_dir/hbbl.bin.ecc",
+	'RINGOVD' => "",#$scratch_dir/ringOvd.bin", #blank + ecc
+	'HB_VOLATILE' => "",#$scratch_dir/guard.bin.ecc"
 );
 
 #Generate the CSV
