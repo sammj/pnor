@@ -264,12 +264,12 @@ foreach my $section (@{$ref->{'section'}}) {
 	my $file = "/dev/zero";
 	if (exists($filenames{$section->{'eyeCatch'}})) {
 		$file = "$filenames{$section->{'eyeCatch'}}";
-		#if (exists($create_blank{$section->{'eyeCatch'}})) {
-		#	run_command("dd if=/dev/zero bs=16K count=1 | tr \"\\000\" \"\\377\" > $file");
-		#	if (exists($section->{'ecc'})) {
-		#		run_command("ecc --inject $file --output $file --p9");
-		#	}
-		#}
+		# TODO have a way of marking partitions as optional
+		if ($section->{'eyeCatch'} eq "MEMD") {
+			unless(-e $file) {
+				$file="";
+			}
+		}
 	} else {
 		print STDERR "# Don't know what file to use for partition: $section->{'eyeCatch'}\n";
 	}
@@ -312,7 +312,7 @@ if ($side_count == 2) {
 
 #ffspart should really learn to make its own output file
 run_command("touch $pnor_filename");
-run_command("ffspart -s $block_size --create_blank -c $block_count -i $scratch_dir/pnor_layout.csv -p $pnor_filename");
+run_command("ffspart -s $block_size -c $block_count -i $scratch_dir/pnor_layout.csv -p $pnor_filename --allow_empty");
 
 #END MAIN
 #-------------------------------------------------------------------------
