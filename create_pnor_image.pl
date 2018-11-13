@@ -3,27 +3,42 @@
 use strict;
 use File::Basename;
 use XML::Simple;
+use Getopt::Long;
+use Pod::Usage;
 
 my $program_name = File::Basename::basename $0;
-my $release = "";
-my $outdir = "";
-my $scratch_dir = "";
-my $pnor_data_dir = "";
-my $pnor_filename = "";
-my $payload = "";
-my $bootkernel = "";
-my $rootfs = "";
-my $hb_image_dir = "";
-my $xml_layout_file = "";
-my $targeting_binary_filename = "";
+
+# Mandatory arguments
+my $release;
+my $outdir;
+my $scratch_dir; # mayyyybe, probably not needed if we pull from hb_image_dir etc
+my $pnor_data_dir;
+my $pnor_filename;
+my $hb_image_dir;
+my $xml_layout_file;
+my $payload;
+my $bootkernel;
+my $occ_binary_filename;
+my $sbe_binary_filename;
+my $targeting_binary_filename;
+my $hcode_file;
+my $hbbl_file;
+my $openpower_version_filename;
+
+# Platform dependent arguments
+# P9
+my $hdat_binary_filename;
+my $wofdata_binary_filename;
+my $memddata_binary_filename;
+# P8
 my $sbec_binary_filename = "";
-my $sbe_binary_filename = "";
 my $wink_binary_filename = "";
-my $occ_binary_filename = "";
-my $openpower_version_filename = "";
-my $wofdata_binary_filename = "";
-my $memddata_binary_filename = "";
-my $hdat_binary_filename = "";
+
+# Optional arguments (ie. optional source files)
+my $rootfs = "";
+my $sbkt_file = "";
+my $ringovd = "";
+my $hb_volatile_file = "";
 
 my $SEPARATOR = ",";
 
@@ -40,98 +55,42 @@ sub write_partition_csv {
 		$name, $base, $size, $flags, $tocs, $file;
 }
 
-while (@ARGV > 0){
-    $_ = $ARGV[0];
-    chomp($_);
-    $_ = &trim_string($_);
-    if (/^-h$/i || /^-help$/i || /^--help$/i){
-        #print help content
-        usage();
-        exit 0;
-    }
-    elsif (/^-release/i){
-        $release = $ARGV[1] or die "Bad command line arg given: expecting a release input.\n";
-        shift;
-    }
-    elsif (/^-scratch_dir/i){
-        $scratch_dir = $ARGV[1] or die "Bad command line arg given: expecting a scratch dir path.\n";
-        shift;
-    }
-    elsif (/^-outdir/i){
-        $outdir = $ARGV[1] or die "Bad command line arg given: expecting a directory for output data.\n";
-        shift;
-    }
-    elsif (/^-pnor_data_dir/i){
-        $pnor_data_dir = $ARGV[1] or die "Bad command line arg given: expecting a directory containing pnor data.\n";
-        shift;
-    }
-    elsif (/^-pnor_filename/i){
-        $pnor_filename = $ARGV[1] or die "Bad command line arg given: expecting a pnor filename.\n";
-        shift;
-    }
-    elsif (/^-hb_image_dir/i){
-        $hb_image_dir = $ARGV[1] or die "Bad command line arg given: expecting an hb image dir path.\n";
-        shift;
-    }
-    elsif (/^-xml_layout_file/i){
-        $xml_layout_file = $ARGV[1] or die "Bad command line arg given: expecting an xml layout file.\n";
-        shift;
-    }
-    elsif (/^-payload/i){
-        $payload = $ARGV[1] or die "Bad command line arg given: expecting a filepath to payload binary file.\n";
-        shift;
-    }
-    elsif (/^-bootkernel/i){
-        $bootkernel = $ARGV[1] or die "Bad command line arg given: expecting a filepath to bootloader kernel image.\n";
-        shift;
-    }
-    elsif (/^-rootfs/i){
-        $rootfs = $ARGV[1] or die "Bad command line arg given: expecting a filepath to bootloader rootfs image.\n";
-        shift;
-    }
-    elsif (/^-targeting_binary_filename/i){
-        $targeting_binary_filename = $ARGV[1] or die "Bad command line arg given: expecting a targeting binary filename.\n";
-        shift;
-    }
-    elsif (/^-sbe_binary_filename/i){
-        $sbe_binary_filename = $ARGV[1] or die "Bad command line arg given: expecting an sbe binary filename.\n";
-        shift;
-    }
-    elsif (/^-sbec_binary_filename/i){
-        $sbec_binary_filename = $ARGV[1] or die "Bad command line arg given: expecting an sbec binary filename.\n";
-        shift;
-    }
-    elsif (/^-wink_binary_filename/i){
-        $wink_binary_filename = $ARGV[1] or die "Bad command line arg given: expecting an wink binary filename.\n";
-        shift;
-    }
-    elsif (/^-occ_binary_filename/i){
-        $occ_binary_filename = $ARGV[1] or die "Bad command line arg given: expecting an occ binary filename.\n";
-        shift;
-    }
-    elsif (/^-openpower_version_filename/i){
-        $openpower_version_filename = $ARGV[1] or die "Bad command line arg given: expecting openpower version filename.\n";
-        shift;
-    }
-    elsif (/^-wofdata_binary_filename/i){
-        $wofdata_binary_filename = $ARGV[1] or die "Bad command line arg given: expecting a wofdata binary filename.\n";
-        shift;
-    }
-    elsif (/^-memddata_binary_filename/i){
-        $memddata_binary_filename = $ARGV[1] or die "Bad command line arg given: expecting a memddata binary filename.\n";
-        shift;
-    }
-    elsif (/^-hdat_binary_filename/i){
-        $hdat_binary_filename = $ARGV[1] or die "Bad command line arg given: expecting a hdat binary filename.\n";
-        shift;
-    }
-    else {
-        print "Unrecognized command line arg: $_ \n";
-        print "To view all the options and help text run \'$program_name -h\' \n";
-        exit 1;
-    }
-    shift;
+GetOptions (
+	# Mandatory arguments
+	'release' => \$release,
+	'outdir' => \$outdir,
+	'scratch_dir' => \$scratch_dir,
+	'pnor_data_dir' => \$pnor_data_dir,
+	'pnor_filename' => \$pnor_filename,
+	'hb_image_dir' => \$hb_image_dir,
+	'xml_layout_file' => \$xml_layout_file,
+	'payload' => \$payload,
+	'bootkernel' => \$bootkernel,
+	'occ_binary_filename' => \$occ_binary_filename,
+	'sbe_binary_filename' => \$sbe_binary_filename,
+	'targeting_binary_filename' => \$targeting_binary_filename,
+	'hcode_file' => \$hcode_file,
+	'hbbl_file' => \$hbbl_file,
+	'openpower_version_filename' => \$openpower_version_filename,
+	# P9 arguments
+	'hdat_binary_filename' => \$hdat_binary_filename,
+	'wofdata_binary_filename' => \$wofdata_binary_filename,
+	'memddata_binary_filename' => \$memddata_binary_filename,
+	# P8 arguments
+	'sbec_binary_filename' => \$sbec_binary_filename,
+	'wink_binary_filename' => \$wink_binary_filename,
+	# Optional arguments
+	'rootfs' => \$rootfs,
+	'sbkt_file' => \$sbkt_file,
+	'ringovd' => \$ringovd,
+	'hb_volatile_file' => \$hb_volatile_file,
+	);
+
+if ($ARGV != 1) {
+	die "Unrecognised arguments\n";
 }
+
+# Check for mandatory arguments
 
 if ($outdir eq "") {
     die "-outdir <path_to_directory_for_output_files> is a required command line variable. Please run again with this parameter.\n";
@@ -144,27 +103,16 @@ print "release = $release\n";
 print "scratch_dir = $scratch_dir\n";
 print "pnor_data_dir = $pnor_data_dir\n";
 
-# TODO create ourselves (blank?):
-my %create_blank = (
-	'HBEL',
-	'GUARD',
-	'NVRAM',
-	'MVPD',
-	'DJVPD',
-	'ATTR_TMP',
-	'ATTR_PERM',
-	'FIRDATA',
-	'SECBOOT',
-	'RINGOVD'
-);
-# which we may as well do in ffspart right? --create-blank?
 my %filenames = (
-	# FIXME anything with $scratch_dir in the same needs to be fixed
-	'HBD' => "",#$scratch_dir/$targeting_binary_filename",
-	'SBE' => "",#$scratch_dir/$sbe_binary_filename",
-	'HBB' => "",#$scratch_dir/hostboot.header.bin.ecc",
-	'HBI' => "",#$scratch_dir/hostboot_extended.header.bin.ecc",
-	'HBRT' => "",#$scratch_dir/hostboot_runtime.header.bin.ecc",
+	# FIXME something seems off, have I overshot here? How much crap
+	# ends up in the scratch dir?
+	# right, HBD comes from op_target_dir/targeting_binary_source, so we're
+	# blanking out too much
+	'HBD' => "",#FIXME$scratch_dir/$targeting_binary_filename",
+	'SBE' => "",#FIXME$scratch_dir/$sbe_binary_filename",
+	'HBB' => "",#FIXME$scratch_dir/hostboot.header.bin.ecc",
+	'HBI' => "",#FIXME$scratch_dir/hostboot_extended.header.bin.ecc",
+	'HBRT' => "",#FIXME$scratch_dir/hostboot_runtime.header.bin.ecc",
 	'HBEL' => "",#$scratch_dir/hbel.bin.ecc", # blank + ecc
 	'GUARD' => "",#$scratch_dir/guard.bin.ecc", # blank + ecc
 	'PAYLOAD' => "$payload",
@@ -173,28 +121,28 @@ my %filenames = (
 	'NVRAM' => "",#$scratch_dir/nvram.bin", # blank
 	'MVPD' => "",#$scratch_dir/mvpd_fill.bin.ecc", # blank + ecc
 	'DJVPD' => "",#$scratch_dir/djvpd_fill.bin.ecc", # blank + ecc
-	'CVPD' => "",#$scratch_dir/cvpd.bin.ecc",
+	'CVPD' => "",#FIXME$scratch_dir/cvpd.bin.ecc",
 	'ATTR_TMP' => "",#$scratch_dir/attr_tmp.bin.ecc", #blank + ecc
 	'ATTR_PERM' => "",#$scratch_dir/attr_perm.bin.ecc", #blank + ecc
 	'OCC' => "$occ_binary_filename",
 	'FIRDATA' => "",#$scratch_dir/firdata.bin.ecc", #blank + ecc
-	'CAPP' => "",#$scratch_dir/cappucode.bin.ecc",
+	'CAPP' => "",#FIXME$scratch_dir/cappucode.bin.ecc",
 	'SECBOOT' => "",#$scratch_dir/secboot.bin.ecc", #blank + ecc
 	'VERSION' => "$openpower_version_filename",
-	'IMA_CATALOG' => "",#$scratch_dir/ima_catalog.bin.ecc",
+	'IMA_CATALOG' => "",#FIXME$scratch_dir/ima_catalog.bin.ecc",
 	#P9 Only
 	'WOFDATA' => "$wofdata_binary_filename",
 	'MEMD' => "$memddata_binary_filename",
 	'HDAT' => "$hdat_binary_filename",
 	#P8 Only
-	'SBEC' => "",#$scratch_dir/$sbec_binary_filename",
-	'WINK' => "",#$scratch_dir/$wink_binary_filename",
+	'SBEC' => "",#FIXME$scratch_dir/$sbec_binary_filename",
+	'WINK' => "",#FIXME$scratch_dir/$wink_binary_filename",
 	#Not P8
-	'SBKT' => "",#$scratch_dir/SBKT.bin",
-	'HCODE' => "",#$scratch_dir/$wink_binary_filename",
-	'HBBL' => "",#$scratch_dir/hbbl.bin.ecc",
+	'SBKT' => "",#FIXME$scratch_dir/SBKT.bin",
+	'HCODE' => "",#FIXME$scratch_dir/$wink_binary_filename",
+	'HBBL' => "",#FIXME$scratch_dir/hbbl.bin.ecc",
 	'RINGOVD' => "",#$scratch_dir/ringOvd.bin", #blank + ecc
-	'HB_VOLATILE' => "",#$scratch_dir/guard.bin.ecc"
+	'HB_VOLATILE' => "",#FIXME don't actually know $scratch_dir/guard.bin.ecc"
 );
 
 #Generate the CSV
@@ -316,18 +264,6 @@ run_command("ffspart -s $block_size -c $block_count -i $scratch_dir/pnor_layout.
 
 #END MAIN
 #-------------------------------------------------------------------------
-sub usage {
-
-
-print <<"ENDUSAGE";
-
-
-ENDUSAGE
-
-;
-}
-
-
 sub parse_config_file {
 
 }
